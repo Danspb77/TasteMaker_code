@@ -3,7 +3,9 @@
 ![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 
-# TasteMaker API v1
+# TasteMaker API v1  
+
+>При запущенном сервере доступна интерактивная документация Swagger [http://127.0.0.1:8000/swagger)](http://127.0.0.1:8000/swagger)
 
 ## Работа с пользователями
 * [Регистрация нового пользователя](#register)
