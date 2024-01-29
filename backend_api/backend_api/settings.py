@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework',
     'users',
+    'drf_yasg', # swagger docs
 ]
 
 MIDDLEWARE = [
