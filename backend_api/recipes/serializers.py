@@ -10,7 +10,8 @@ class RecipeSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         request = self.context.get('request')
         if request:
-            categories_data = attrs.get('category')
+            categories_data_str = attrs.get('category')
+            categories_data = [name.strip() for name in categories_data_str[0].split(",")]
 
             categories = []
             for category_name in categories_data:
