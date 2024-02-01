@@ -1,18 +1,23 @@
 from rest_framework import serializers
+
 from .models import Category, Recipe
 
 
-
 class RecipeSerializer(serializers.ModelSerializer):
+
+    # список категорий, принятый сервером
     category = serializers.ListField(write_only=True)
+    # список категорий в ответе сервера
     category_data = serializers.SerializerMethodField()
 
     def validate(self, attrs):
         request = self.context.get('request')
         if request:
+            # получаем список категорий в виде строки и превращаем в список
             categories_data_str = attrs.get('category')
             categories_data = [name.strip() for name in categories_data_str[0].split(",")]
 
+            # ищем объекты 'category' по имени и складываем в список, создаем если не найдено
             categories = []
             for category_name in categories_data:
                 category, created = Category.objects.get_or_create(name=category_name)
@@ -33,5 +38,3 @@ class RecipeSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = "__all__"
         read_only_fields = ('user', "category_data")
-
-
