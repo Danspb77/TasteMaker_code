@@ -1,8 +1,19 @@
-from rest_framework.serializers import ModelSerializer
-from .models import Recipe
+from rest_framework import serializers
+from .models import Recipe, Category
 
 
-class RecipeSerializer(ModelSerializer):
+class CategoryListSerializer(serializers.ListSerializer):
+    def to_representation(self, data):
+        return [item.name for item in data]
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['name']
+        list_serializer_class = CategoryListSerializer
+
+class RecipeSerializer(serializers.ModelSerializer):
+    # category = CategorySerializer()
     class Meta:
         model = Recipe
         fields = '__all__'
