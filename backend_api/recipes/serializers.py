@@ -4,7 +4,6 @@ from .models import Category, Recipe
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-
     # список категорий, принятый сервером
     category = serializers.ListField(write_only=True)
     # список категорий в ответе сервера
@@ -36,5 +35,14 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = "__all__"
-        read_only_fields = ('user', "category_data")
+        fields = ('id',
+                  "name",
+                  'description',
+                  'category',
+                  'image',
+                  'cooking_instructions',
+                  'cooking_time_in_minutes',
+                  'category_data',
+                  )
+
+        read_only_fields = ('id', "category_data", "published_at")
