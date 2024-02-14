@@ -1,4 +1,8 @@
+from pprint import pprint
+
 from rest_framework import serializers
+from rest_framework.serializers import raise_errors_on_nested_writes
+from rest_framework.utils import model_meta
 
 from .models import Recipe, Step, Tag
 
@@ -70,76 +74,41 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         return recipe
 
-    """
-    # список категорий, принятый сервером
-    category = serializers.ListField(write_only=True)
-    # список категорий в ответе сервера
-    category_data = serializers.SerializerMethodField()
 
-    def validate(self, attrs):
-        request = self.context.get('request')
-        if request:
-            # получаем список категорий в виде строки и превращаем в список
-            categories_data_str = attrs.get('category')
-            categories_data = [name.strip() for name in categories_data_str[0].split(",")]
+    def update(self, instance, validated_data):
+        if validated_data.get('steps'):
+            steps_data = validated_data.pop('steps')
+            for step_data in steps_data:
+                step, created = Step.objects.get_or_create(order=step_data['order'], recipe=instance)
 
-            # ищем объекты 'category' по имени и складываем в список, создаем если не найдено
-            categories = []
-            for category_name in categories_data:
-                category, created = Category.objects.get_or_create(name=category_name)
-                categories.append(category)
+                for attr, value in step_data.items():
+                    setattr(step, attr, value)
+                step.save()
 
-            attrs['category'] = categories
-            return attrs
+        tags = []
+        if validated_data.get('tags'):
+            tags_data = validated_data.pop('tags')
 
-    def get_category_data(self, instance):
-        return instance.category.values_list('name', flat=True)
+            for tag_data in tags_data:
+                tag, created = Tag.objects.get_or_create(name=tag_data['name'])
+                tags.append(tag)
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['category_data'] = self.get_category_data(instance)
-        return representation
-    """
+        raise_errors_on_nested_writes('update', self, validated_data)
+        info = model_meta.get_field_info(instance)
 
+        validated_data['tags'] = tags
 
-"""
-from rest_framework.parsers import BaseParser
-from rest_framework.exceptions import ParseError
-from django.core.files.uploadedfile import TemporaryUploadedFile
-
-class FormDataParser(BaseParser):
-
-    # Парсер для обработки form-data в Django DRF
-
-
-    media_type = 'multipart/form-data'
-
-    def parse(self, stream, media_type=None, parser_context=None):
-        try:
-            import requests
-        except ImportError:
-            raise ImportError("Необходима установка библиотеки 'requests' для работы с формами")
-
-        # Извлечение данных запроса из контекста
-        request = parser_context['request']
-
-        # Получение данных form-data
-        data = request.POST.dict()
-        files = request.FILES
-
-        # Обработка форм файлов
-        form_files = {}
-        for key, file in files.items():
-            if isinstance(file, TemporaryUploadedFile):
-                # Если файл уже является экземпляром TemporaryUploadedFile, добавляем его в словарь
-                form_files[key] = file
+        m2m_fields = []
+        for attr, value in validated_data.items():
+            if attr in info.relations and info.relations[attr].to_many:
+                m2m_fields.append((attr, value))
             else:
-                # Если файл еще не был сохранен на сервере, сохраняем его временно
-                temp_file = TemporaryUploadedFile(file.name, file.content_type, file.size, file.charset)
-                temp_file.write(file.read())
-                temp_file.seek(0)
-                form_files[key] = temp_file
+                setattr(instance, attr, value)
 
-        return data, form_files
+        instance.save()
 
-"""
+        for attr, value in m2m_fields:
+            field = getattr(instance, attr)
+            field.set(value)
+
+        return instance
