@@ -4,8 +4,8 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.utils import json
 
-from .models import Recipe
-from .serializers import FormDataSerializer, RecipeSerializer
+from .models import Recipe, Step
+from .serializers import FormDataSerializer, RecipeSerializer, StepSerializer
 
 
 class RecipeModelViewSet(viewsets.ModelViewSet):
@@ -19,24 +19,31 @@ class RecipeModelViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         data = serializer.validated_data
+
+        # получаем json строку
         json_row = data.pop('json')
 
-        if json_row:
-            json_data = json.loads(json_row)
-            data['name'] = json_data['name']
-            data['description'] = json_data['description']
-            data['ingredients'] = json_data['ingredients']
-            data['cooking_instructions'] = json_data['cooking_instructions']
-            data['cooking_time_in_minutes'] = json_data['cooking_time_in_minutes']
+        # перекладываем данные из json строки в основной словарь 'data'
+        json_data = json.loads(json_row)
+        for key, value in json_data.items():
+            data[key] = value
 
+        # добавляем к step - изображение из запроса, если оно есть
+        steps_data = data.get('steps')
+        for step_data in steps_data:
+            order = step_data['order']
+            key = f'step{order}_image'
+            step_data['image'] = data.get(key)
+
+        # переименовываем поле 'recipe_image' в 'image'
         data['image'] = data.pop('recipe_image')
 
-        # валидация данных json строки (должны быть поля для модели Recipe)
+        # валидация объекта Recipe
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
 
         # создание объекта в бд
-        self.perform_create(serializer)
+        serializer.save()
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)

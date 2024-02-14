@@ -1,26 +1,38 @@
 from rest_framework import serializers
 
-from .models import Recipe
+from .models import Recipe, Step, Tag
 
 
 class FormDataSerializer(serializers.Serializer):
-    json = serializers.CharField(max_length=200)
+    json = serializers.CharField(max_length=2000)
     recipe_image = serializers.ImageField(max_length=(1024 * 1024 * 2))
+    step1_image = serializers.ImageField(max_length=(1024 * 1024 * 2), required=False)
+    step2_image = serializers.ImageField(max_length=(1024 * 1024 * 2), required=False)
+    step3_image = serializers.ImageField(max_length=(1024 * 1024 * 2), required=False)
+    step4_image = serializers.ImageField(max_length=(1024 * 1024 * 2), required=False)
+    step5_image = serializers.ImageField(max_length=(1024 * 1024 * 2), required=False)
+    step6_image = serializers.ImageField(max_length=(1024 * 1024 * 2), required=False)
+    step7_image = serializers.ImageField(max_length=(1024 * 1024 * 2), required=False)
+    step8_image = serializers.ImageField(max_length=(1024 * 1024 * 2), required=False)
+    step9_image = serializers.ImageField(max_length=(1024 * 1024 * 2), required=False)
+    step10_image = serializers.ImageField(max_length=(1024 * 1024 * 2), required=False)
 
 
-# upload_to - задает путь, куда будут сохраняться загруженные изображения.
-# null - указывает, может ли поле быть пустым (True/False).
-# blank - указывает, является ли поле обязательным для заполнения в форме (True/False).
-# max_length - задает максимальную длину имени файла (по умолчанию - 100).
-# height_field - указывает имя поля, которое будет содержать высоту изображения.
-# width_field - указывает имя поля, которое будет содержать ширину изображения.
-# validators - позволяет определить список валидаторов для проверки загружаемого изображения.
-# help_text - определяет текст справки, отображаемый при использовании формы или API.
-# default - задает значение по умолчанию для поля.
-# editable - указывает, может ли поле редактироваться пользователем (True/False).
+class StepSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Step
+        fields = ['order', 'text', 'image',]
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ['name',]
 
 
 class RecipeSerializer(serializers.ModelSerializer):
+    steps = StepSerializer(many=True)
+    tags = TagSerializer(many=True)
+
     class Meta:
         model = Recipe
         fields = ('id',
@@ -29,12 +41,34 @@ class RecipeSerializer(serializers.ModelSerializer):
                   'ingredients',
                   'image',
                   'cooking_instructions',
-                  'cooking_time_in_minutes',
-                  # 'category',
-                  # 'category_data',
+                  'cooking_time',
+                  'steps',
+                  'tags',
                   )
 
-        read_only_fields = ('id', "category_data", "published_at")
+        read_only_fields = ('id', "published_at")
+
+
+    def create(self, validated_data):
+        steps_data = validated_data.pop('steps')
+
+        # создаем 'tag', если не существует
+        tags_data = validated_data.pop('tags')
+        tags = []
+        for tag_data in tags_data:
+            tag, created = Tag.objects.get_or_create(name=tag_data['name'])
+            tags.append(tag)
+
+        # создаем рецепт
+        recipe = Recipe.objects.create(**validated_data)
+        # устанавливаем теги
+        recipe.tags.set(tags)
+
+        # создаем объекты 'step' в базе данных
+        for step_data in steps_data:
+            Step.objects.create(recipe=recipe, **step_data)
+
+        return recipe
 
     """
     # список категорий, принятый сервером
