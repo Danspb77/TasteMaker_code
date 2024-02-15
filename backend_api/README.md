@@ -5,6 +5,8 @@
 
 # TasteMaker API v1  
 
+Самая свежая документация [здесь](https://github.com/Danspb77/TasteMaker_code/wiki)
+
 ## Запуск приложения
 
 > Загрузка проекта
