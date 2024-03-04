@@ -20,10 +20,6 @@ class Recipe(models.Model):
     cooking_time = models.DurationField(default=timedelta(minutes=0))
     published_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return self.name
-
-
 class Step(models.Model):
     order = models.IntegerField()
     text = models.CharField(max_length=150)

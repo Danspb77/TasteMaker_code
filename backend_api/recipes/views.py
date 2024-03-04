@@ -3,13 +3,17 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.utils import json
 
-from .models import Recipe, Ingredient
-from .serializers import FormDataSerializer, RecipeSerializer, IngredientSerializer
+from .models import Recipe, Ingredient, Measure
+from .serializers import FormDataSerializer, RecipeSerializer, IngredientSerializer, MeasureSerializer
 
 
 class IngredientModelView(generics.ListAPIView):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+
+class MeasureModelView(generics.ListAPIView):
+    queryset = Measure.objects.all()
+    serializer_class = MeasureSerializer
 
 class RecipeModelViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
