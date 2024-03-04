@@ -42,3 +42,5 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='ingredients')
     measure = models.ForeignKey(Measure, on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = ['recipe', 'ingredient']

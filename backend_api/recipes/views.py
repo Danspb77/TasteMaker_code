@@ -1,7 +1,5 @@
 from rest_framework import viewsets, status, generics
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from rest_framework.utils import json
 
 from .models import Recipe, Ingredient, Measure
 from .serializers import FormDataSerializer, RecipeSerializer, IngredientSerializer, MeasureSerializer
@@ -19,45 +17,35 @@ class RecipeModelViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
 
-    def find_image_file(self, search_file_name, images):
+    def find_image_file(self, value, images):
         for file in images:
-            if str(file) == search_file_name:
+            if str(file) == value:
                 return file
 
-    def find_image_values(self, dictionary, images):
-        image_values = []
-        # print(dictionary)
-        for key, value in dictionary.items():
+    def replace_filenames_with_files(self, data, images):
+        for key, value in data.items():
             if key == 'image':
-                dictionary[key] = self.find_image_file(value, images)
+                data[key] = self.find_image_file(value, images)
             elif isinstance(value, dict):
-                image_values.extend(self.find_image_values(value, images))
+                self.replace_filenames_with_files(value, images)
             elif isinstance(value, list):
                 for item in value:
                     if isinstance(item, dict):
-                        image_values.extend(self.find_image_values(item, images))
-        return image_values
+                        self.replace_filenames_with_files(item, images)
+        return data
 
 
     def create(self, request, *args, **kwargs):
 
-        # валидация наличия json и файлов в форме
         serializer = FormDataSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         data = serializer.validated_data
 
         images = data.pop('images')
-        json_row = data.pop('json')
-        try:
-            json_data = json.loads(json_row)
-        except Exception:
-            raise ValidationError('Invalid json')
+        data = data.pop('json')
 
-        for key, value in json_data.items():
-            data[key] = value
-
-        self.find_image_values(data, images)
+        data = self.replace_filenames_with_files(data, images)
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -69,35 +57,15 @@ class RecipeModelViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
 
-        # валидация наличия json и файлов в форме
-        serializer = FormDataSerializer(data=request.data, partial=partial)
+        serializer = FormDataSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         data = serializer.validated_data
 
+        images = data.pop('images')
+        data = data.pop('json')
 
-
-        # получаем json строку
-        if data.get('json'):
-            json_row = data.pop('json')
-
-            # перекладываем данные из json строки в основной словарь 'data'
-            json_data = json.loads(json_row)
-            if json_data:
-                for key, value in json_data.items():
-                    data[key] = value
-
-        # добавляем к step - изображение из запроса, если оно есть
-        steps_data = data.get('steps')
-        if steps_data:
-            for step_data in steps_data:
-                order = step_data['order']
-                key = f'step{order}_image'
-                step_data['image'] = data.get(key)
-
-        # переименовываем поле 'recipe_image' в 'image'
-        if data.get('recipe_image'):
-            data['image'] = data.pop('recipe_image')
+        data = self.replace_filenames_with_files(data, images)
 
         instance = self.get_object()
 

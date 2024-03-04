@@ -9,7 +9,7 @@ from .models import Recipe, Step, Ingredient, RecipeIngredient, Measure
 
 
 class FormDataSerializer(serializers.Serializer):
-    json = fields.CharField()
+    json = fields.JSONField()
     images = serializers.ListField(child=serializers.ImageField(
             max_length=(1024 * 1024 * 2),
             validators=[validators.FileExtensionValidator(['png', 'jpg', 'jpeg'])]
@@ -81,7 +81,6 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         return super().to_internal_value(data)
 
-
     class Meta:
         model = Recipe
         fields = ('id',
@@ -101,10 +100,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         steps_data = validated_data.pop('steps')
         ingredients_data = validated_data.pop('ingredients')
 
-        # создаем рецепт
         recipe = super().create(validated_data)
 
-        # создаем объекты 'step' в базе данных
         for step_data in steps_data:
             Step.objects.create(recipe=recipe, **step_data)
 
@@ -138,6 +135,29 @@ class RecipeSerializer(serializers.ModelSerializer):
                 for attr, value in step_data.items():
                     setattr(step, attr, value)
                 step.save()
+
+        if validated_data.get('ingredients'):
+            ingredients_data = validated_data.pop('ingredients')
+            for ingredient_data in ingredients_data:
+                try:
+                    ingredient_name = ingredient_data.get("ingredient").get("name")
+                    ingredient = Ingredient.objects.get(name=ingredient_name)
+                    ingredient_data.pop('ingredient')
+                except Exception:
+                    raise ValidationError(f"Ingredient with name: '{ingredient_name}' does not exist")
+
+                if 'measure'in ingredient_data:
+                    try:
+                        measure_name = ingredient_data.get("measure").get("name")
+                        measure = Measure.objects.get(name=measure_name)
+                        ingredient_data['measure'] = measure
+                    except Exception:
+                        raise ValidationError(f"Measure with name: '{measure_name}' does not exist")
+
+                recipe_ingredient = RecipeIngredient.objects.get(ingredient=ingredient, recipe=instance)
+                if recipe_ingredient:
+                    RecipeIngredient.objects.filter(
+                        ingredient=ingredient, recipe=instance).update(**ingredient_data)
 
         instance = super().update(instance, validated_data)
 
