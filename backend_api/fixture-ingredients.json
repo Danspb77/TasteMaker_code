@@ -1,18 +1,4 @@
 [
-    {
-    "model": "recipes.measure",
-    "pk": 1,
-    "fields": {
-      "name": "миллилитров"
-    }
-  },
-  {
-    "model": "recipes.measure",
-    "pk": 2,
-    "fields": {
-      "name": "грамм"
-    }
-  },
   {
     "model": "recipes.ingredient",
     "pk": 1,
