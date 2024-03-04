@@ -1,16 +1,10 @@
-from copy import deepcopy
-from pprint import pprint
-
-from django.http import QueryDict
 from rest_framework import viewsets, status, generics
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.utils import json
 
 from .models import Recipe, Ingredient
 from .serializers import FormDataSerializer, RecipeSerializer, IngredientSerializer
-
-
 
 
 class IngredientModelView(generics.ListAPIView):
@@ -51,13 +45,15 @@ class RecipeModelViewSet(viewsets.ModelViewSet):
 
         images = data.pop('images')
         json_row = data.pop('json')
-        json_data = json.loads(json_row)
+        try:
+            json_data = json.loads(json_row)
+        except Exception:
+            raise ValidationError('Invalid json')
 
         for key, value in json_data.items():
             data[key] = value
 
         self.find_image_values(data, images)
-
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
