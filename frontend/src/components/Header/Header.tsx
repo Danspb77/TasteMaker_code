@@ -4,6 +4,7 @@ import { Button } from "../UI/Button/Button.tsx"
 import { Link } from "react-router-dom"
 import Logo from "../../assets/logo.png"
 import { useAuth } from "../../hooks/useAuth.ts"
+import userDefaultIcon from "../../assets/icons/user.png"
 
 export const Header = () => {
   const { isAuth } = useAuth()
@@ -15,17 +16,17 @@ export const Header = () => {
             <img src={Logo} alt="logo" />
           </Link>
           <nav className={s.menu}>
-            <ul>
-             <li>
-               <Link to="/">Главная</Link>
-             </li>
-             <li>
-               <Link to="/recipes">Рецепты</Link>
-             </li>
-             <li>
-               <Link to="/my-recipes">Мои рецепты</Link>
-             </li>
-            </ul>
+            {/*<ul>*/}
+            {/* <li>*/}
+            {/*   <Link to="/">Главная</Link>*/}
+            {/* </li>*/}
+            {/* <li>*/}
+            {/*   <Link to="/recipes">Рецепты</Link>*/}
+            {/* </li>*/}
+            {/* <li>*/}
+            {/*   <Link to="/my-recipes">Мои рецепты</Link>*/}
+            {/* </li>*/}
+            {/*</ul>*/}
           </nav>
 
           <div className={s.btns}>
@@ -36,7 +37,9 @@ export const Header = () => {
               <Button>
                 <Link to="/login">Войти</Link>
               </Button>
-            ) : null}
+            ) : (
+              <img src={userDefaultIcon} alt="user-icon" />
+            )}
           </div>
         </header>
       </Container>
