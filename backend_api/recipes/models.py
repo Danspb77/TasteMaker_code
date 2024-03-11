@@ -7,10 +7,6 @@ from services.services import generate_filename, validate_file_size
 
 
 
-
-
-
-
 class Recipe(models.Model):
     name = models.CharField(max_length=150)
     # user = models.ForeignKey(User, on_delete=models.CASCADE)
