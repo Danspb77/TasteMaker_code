@@ -1,6 +1,12 @@
-from rest_framework import viewsets, status, generics
+
+from rest_framework import status, generics
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import AllowAny, IsAuthenticated
+
+from drf_spectacular.utils import extend_schema_view, extend_schema
+from rest_framework import viewsets, parsers, status
+from rest_framework.decorators import api_view, action
+from rest_framework.permissions import IsAuthenticated, AllowAny
+
 from rest_framework.response import Response
 
 from .models import Recipe, Ingredient, Measure
@@ -11,9 +17,20 @@ class IngredientModelView(generics.ListAPIView):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
 
+
 class MeasureModelView(generics.ListAPIView):
     queryset = Measure.objects.all()
     serializer_class = MeasureSerializer
+
+
+@extend_schema_view(
+    create=extend_schema(summary='Создание рецепта', tags=['Рецепты']),
+    list=extend_schema(summary='Получение всех рецептов', tags=['Рецепты']),
+    retrieve=extend_schema(summary='Получение одного рецептов', tags=['Рецепты']),
+    update=extend_schema(summary='Полное редактирование рецепта', tags=['Рецепты']),
+    partial_update=extend_schema(summary='Частичное редактирование рецепта', tags=['Рецепты']),
+    destroy=extend_schema(summary='Удаление рецепта', tags=['Рецепты']),
+)
 
 class RecipeModelViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
