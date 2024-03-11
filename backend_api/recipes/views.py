@@ -1,4 +1,6 @@
 from rest_framework import viewsets, status, generics
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Recipe, Ingredient, Measure
@@ -25,7 +27,10 @@ class RecipeModelViewSet(viewsets.ModelViewSet):
     def replace_filenames_with_files(self, data, images):
         for key, value in data.items():
             if key == 'image':
-                data[key] = self.find_image_file(value, images)
+                file = self.find_image_file(value, images)
+                if not file:
+                    raise ValueError(value)
+                data[key] = file
             elif isinstance(value, dict):
                 self.replace_filenames_with_files(value, images)
             elif isinstance(value, list):
@@ -42,10 +47,13 @@ class RecipeModelViewSet(viewsets.ModelViewSet):
 
         data = serializer.validated_data
 
-        images = data.pop('images')
+        images = data.pop('files')
         data = data.pop('json')
 
-        data = self.replace_filenames_with_files(data, images)
+        try:
+            data = self.replace_filenames_with_files(data, images)
+        except ValueError as e:
+            raise ValidationError(f"The file '{e}' was not found in the files array under the key 'files'.")
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -62,10 +70,13 @@ class RecipeModelViewSet(viewsets.ModelViewSet):
 
         data = serializer.validated_data
 
-        images = data.pop('images')
+        images = data.pop('files')
         data = data.pop('json')
 
-        data = self.replace_filenames_with_files(data, images)
+        try:
+            data = self.replace_filenames_with_files(data, images)
+        except ValueError as e:
+            raise ValidationError(f"The file '{e}' was not found in the files array under the key 'files'.")
 
         instance = self.get_object()
 
@@ -79,14 +90,14 @@ class RecipeModelViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-    # def get_permissions(self):
-    #     """Установка разных уровней доступа для методов"""
-    #     if self.request.method == 'GET':
-    #         permission_classes = [AllowAny]  # Метод GET доступен всем
-    #     else:
-    #         permission_classes = [IsAuthenticated]  # Остальные методы требуют авторизации
-    #     return [permission() for permission in permission_classes]
-    #
-    # def perform_create(self, serializer):
-    #     """Автоматически определяем user id и вставляем в соответствующее поле при создании рецепта"""
-    #     serializer.save(user=self.request.user)
+    def get_permissions(self):
+        """Установка разных уровней доступа для методов"""
+        if self.request.method == 'GET':
+            permission_classes = [AllowAny]  # Метод GET доступен всем
+        else:
+            permission_classes = [IsAuthenticated]  # Остальные методы требуют авторизации
+        return [permission() for permission in permission_classes]
+
+    def perform_create(self, serializer):
+        """Автоматически определяем user id и вставляем в соответствующее поле при создании рецепта"""
+        serializer.save(user=self.request.user)
