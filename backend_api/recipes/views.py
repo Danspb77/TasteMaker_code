@@ -25,6 +25,7 @@ class RecipeModelViewSet(viewsets.ModelViewSet):
                 return file
 
     def replace_filenames_with_files(self, data, images):
+        """Ищет все ключи image и заменяет имена файлов, реальными файлами из массива."""
         for key, value in data.items():
             if key == 'image':
                 file = self.find_image_file(value, images)
@@ -38,7 +39,6 @@ class RecipeModelViewSet(viewsets.ModelViewSet):
                     if isinstance(item, dict):
                         self.replace_filenames_with_files(item, images)
         return data
-
 
     def create(self, request, *args, **kwargs):
 

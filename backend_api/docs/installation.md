@@ -26,6 +26,11 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
+> Предварительная загрузка информации в базу данных
+```bash
+python3 manage.py loaddata fixture-ingredients.json fixture-measures.json
+```
+
 > Запуск сервера
 ```bash
 python manage.py runserver

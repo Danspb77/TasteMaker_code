@@ -85,6 +85,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         if data.get('measure'):
             measure = data.pop('measure')
             data['measure'] = {"name": measure}
+
         super().to_internal_value(data)
         return data
 
