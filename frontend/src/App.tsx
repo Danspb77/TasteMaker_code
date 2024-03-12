@@ -27,7 +27,6 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="*" element={<NotFoundPage />} />
           <Route path="/recipes/:id" element={<RecipePage />} />
-          <Route path="/add-new-recipe" element={<NewRecipePage />} />
         </Route>
       </Routes>
     </>
